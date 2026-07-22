@@ -1,0 +1,519 @@
+/* =========================================================================
+   Project Pulse — Dashboard Stylesheet
+   Owner: Designer agent
+   Scope: app/styles.css ONLY
+
+   Contract with Coder (per docs/project-pulse-plan.md Phase 0):
+   - `.dashboard`      -> top-level container (e.g. <div class="dashboard" id="dashboard">)
+   - `.project-card`   -> one per project, expected to carry
+                          data-status="active|blocked|done|planned|<other>"
+                          data-priority="high|medium|low|<other>"
+                          as attributes on the card element itself.
+   - `.status-badge`   -> inline badge element inside the card, holding the
+                          human-readable status text (e.g. "Active").
+   - `.priority-badge` -> inline badge element inside the card, holding the
+                          human-readable priority text (e.g. "High").
+
+   Why data-attributes instead of per-value classes:
+   Using `[data-status="active"]` / `[data-priority="high"]` on `.project-card`
+   keeps the JS mapping trivial (Coder can do
+   `card.dataset.status = project.status || 'unknown'` with zero string
+   concatenation into class lists) and keeps styling centralized here rather
+   than requiring Coder to also know badge class names. Unknown/missing
+   values automatically fall through to the `.status-unknown` /
+   `.priority-unknown` fallback look defined below (no layout break, no
+   silent invisible badge) because the fallback style is the default and
+   known values simply override colors via the attribute selector.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   0. Base / reset / typography
+   ------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-border: #dfe3ec;
+  --color-text-primary: #1a1f36;
+  --color-text-secondary: #4b5268;
+  --color-text-muted: #6b7280;
+  --color-accent: #3454d1;
+  --color-accent-dark: #223a9e;
+
+  --status-active-bg: #e3f6e9;
+  --status-active-text: #0b6b3a;
+  --status-active-border: #8fd6ab;
+
+  --status-blocked-bg: #fdeaea;
+  --status-blocked-text: #a3121b;
+  --status-blocked-border: #f2a6ac;
+
+  --status-done-bg: #e8ecfb;
+  --status-done-text: #2a3b8f;
+  --status-done-border: #b3bdee;
+
+  --status-planned-bg: #fff4e0;
+  --status-planned-text: #8a5a00;
+  --status-planned-border: #f2cd8a;
+
+  --status-unknown-bg: #eceef1;
+  --status-unknown-text: #383e47;
+  --status-unknown-border: #c7ccd4;
+
+  --priority-high-color: #b3261e;
+  --priority-medium-color: #9a6400;
+  --priority-low-color: #146c43;
+  --priority-unknown-color: #55606e;
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-card-hover: 0 2px 4px rgba(16, 24, 40, 0.08), 0 12px 24px rgba(16, 24, 40, 0.12);
+
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
+
+  --focus-ring: 3px solid #1a73e8;
+  --focus-ring-offset: 2px;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    Arial, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Visible focus states for any interactive/focusable element */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+.project-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-md);
+}
+
+/* Fallback for browsers without :focus-visible support */
+a:focus,
+button:focus,
+[tabindex]:focus {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* -------------------------------------------------------------------------
+   1. Page header / dashboard title area
+   ------------------------------------------------------------------------- */
+
+.app-header,
+header {
+  background: linear-gradient(135deg, #1f2a56 0%, #3454d1 100%);
+  color: #ffffff;
+  padding: 2rem 1.5rem 2.25rem;
+  box-shadow: 0 4px 16px rgba(26, 58, 158, 0.25);
+}
+
+.app-header__inner,
+header > * {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.app-header h1,
+header h1 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-header p,
+header p {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 60ch;
+}
+
+.app-header .app-tagline,
+.tagline {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 3rem;
+}
+
+/* -------------------------------------------------------------------------
+   2. .dashboard — responsive grid container
+   ------------------------------------------------------------------------- */
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+/* Mobile: force single column for reliable stacking below ~480px,
+   even though auto-fill would already collapse near this width —
+   this guards against min-content overflow on very small phones. */
+@media (max-width: 480px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Tablet range: slightly tighter card minimum so two columns fit at 768px */
+@media (min-width: 481px) and (max-width: 900px) {
+  .dashboard {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+/* Desktop / wide: allow up to comfortably more columns, cap card growth */
+@media (min-width: 1200px) {
+  .dashboard {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* Empty state / error message rendered by Coder's JS inside .dashboard */
+.dashboard .empty-state,
+.dashboard .error-state {
+  grid-column: 1 / -1;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+}
+
+.dashboard .error-state {
+  border-color: var(--status-blocked-border);
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+   3. .project-card — card shell, shadow, spacing, typography hierarchy
+   ------------------------------------------------------------------------- */
+
+.project-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  /* Priority accent bar on the left edge — not color-only, see section 5 */
+  border-left: 6px solid var(--priority-unknown-color);
+}
+
+.project-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.project-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.project-card__name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.project-card__owner {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.project-card__owner::before {
+  content: "Owner: ";
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.project-card__activity {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  overflow-wrap: break-word;
+}
+
+.project-card__activity::before {
+  content: "Recent activity: ";
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.project-card__description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* Clamp long descriptions to prevent card-height blowout while still
+     allowing full text to be read via native title/tooltip if Coder sets one */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+/* -------------------------------------------------------------------------
+   4. Status badges — shape + label + color (never color alone)
+   ------------------------------------------------------------------------- */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--status-unknown-border);
+  background: var(--status-unknown-bg);
+  color: var(--status-unknown-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Distinct leading glyph per status so meaning never depends on color alone */
+.status-badge::before {
+  content: "\25CF"; /* solid dot: unknown/default */
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+.project-card[data-status="active"] .status-badge {
+  background: var(--status-active-bg);
+  color: var(--status-active-text);
+  border-color: var(--status-active-border);
+}
+.project-card[data-status="active"] .status-badge::before {
+  content: "\25B6"; /* play/in-progress triangle */
+}
+
+.project-card[data-status="blocked"] .status-badge {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+  border-color: var(--status-blocked-border);
+}
+.project-card[data-status="blocked"] .status-badge::before {
+  content: "\26A0"; /* warning triangle */
+}
+
+.project-card[data-status="done"] .status-badge {
+  background: var(--status-done-bg);
+  color: var(--status-done-text);
+  border-color: var(--status-done-border);
+}
+.project-card[data-status="done"] .status-badge::before {
+  content: "\2713"; /* checkmark */
+}
+
+.project-card[data-status="planned"] .status-badge {
+  background: var(--status-planned-bg);
+  color: var(--status-planned-text);
+  border-color: var(--status-planned-border);
+}
+.project-card[data-status="planned"] .status-badge::before {
+  content: "\25F3"; /* hourglass-ish/clock quarter */
+}
+
+/* Explicit class fallbacks in case Coder prefers classes over data-attrs;
+   kept in sync 1:1 with the data-attribute rules above. */
+.status-badge.status-active {
+  background: var(--status-active-bg);
+  color: var(--status-active-text);
+  border-color: var(--status-active-border);
+}
+.status-badge.status-blocked {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+  border-color: var(--status-blocked-border);
+}
+.status-badge.status-done {
+  background: var(--status-done-bg);
+  color: var(--status-done-text);
+  border-color: var(--status-done-border);
+}
+.status-badge.status-planned {
+  background: var(--status-planned-bg);
+  color: var(--status-planned-text);
+  border-color: var(--status-planned-border);
+}
+.status-badge.status-unknown {
+  background: var(--status-unknown-bg);
+  color: var(--status-unknown-text);
+  border-color: var(--status-unknown-border);
+}
+
+/* -------------------------------------------------------------------------
+   5. Priority treatment — left accent bar + badge with icon + text label
+   ------------------------------------------------------------------------- */
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1.5px solid currentColor;
+  color: var(--priority-unknown-color);
+  background: transparent;
+}
+
+.priority-badge::before {
+  content: "\25B8"; /* small marker: unknown/default */
+  font-size: 0.7rem;
+}
+
+.project-card[data-priority="high"] {
+  border-left-color: var(--priority-high-color);
+}
+.project-card[data-priority="high"] .priority-badge {
+  color: var(--priority-high-color);
+}
+.project-card[data-priority="high"] .priority-badge::before {
+  content: "\25B2"; /* up triangle = high */
+}
+
+.project-card[data-priority="medium"] {
+  border-left-color: var(--priority-medium-color);
+}
+.project-card[data-priority="medium"] .priority-badge {
+  color: var(--priority-medium-color);
+}
+.project-card[data-priority="medium"] .priority-badge::before {
+  content: "\25A0"; /* square = medium */
+  font-size: 0.55rem;
+}
+
+.project-card[data-priority="low"] {
+  border-left-color: var(--priority-low-color);
+}
+.project-card[data-priority="low"] .priority-badge {
+  color: var(--priority-low-color);
+}
+.project-card[data-priority="low"] .priority-badge::before {
+  content: "\25BC"; /* down triangle = low */
+}
+
+/* Class fallbacks, mirroring the data-attribute rules above */
+.project-card.priority-high {
+  border-left-color: var(--priority-high-color);
+}
+.project-card.priority-high .priority-badge {
+  color: var(--priority-high-color);
+}
+.project-card.priority-medium {
+  border-left-color: var(--priority-medium-color);
+}
+.project-card.priority-medium .priority-badge {
+  color: var(--priority-medium-color);
+}
+.project-card.priority-low {
+  border-left-color: var(--priority-low-color);
+}
+.project-card.priority-low .priority-badge {
+  color: var(--priority-low-color);
+}
+
+/* -------------------------------------------------------------------------
+   6. Responsive header + card scaling for small screens
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+  .app-header,
+  header {
+    padding: 1.5rem 1.25rem 1.75rem;
+  }
+
+  main {
+    padding: 1.25rem 1rem 2.5rem;
+  }
+
+  .project-card {
+    padding: 1rem 1rem 1rem 1.25rem;
+  }
+
+  .project-card__header {
+    flex-direction: column;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   7. Reduced motion preference
+   ------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card {
+    transition: none;
+  }
+  .project-card:hover {
+    transform: none;
+  }
+}

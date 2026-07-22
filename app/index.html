@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Pulse</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>Project Pulse</h1>
+    <p class="site-subtitle">A snapshot of what every team is working on right now.</p>
+  </header>
+
+  <main>
+    <div class="dashboard" id="dashboard" aria-live="polite">
+      <p class="loading-message">Loading projects&hellip;</p>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const dashboard = document.getElementById('dashboard');
+
+      function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = String(value);
+        return div.innerHTML;
+      }
+
+      function renderError(message) {
+        dashboard.innerHTML =
+          '<div class="error-state" role="alert">' +
+          '<p>Something went wrong loading the project dashboard.</p>' +
+          '<p class="error-detail">' + escapeHtml(message) + '</p>' +
+          '</div>';
+      }
+
+      function renderEmptyState() {
+        dashboard.innerHTML =
+          '<div class="empty-state">' +
+          '<p>No projects yet.</p>' +
+          '<p>Check back soon, or add entries to project-data.json.</p>' +
+          '</div>';
+      }
+
+      function normalize(value, fallback) {
+        if (typeof value !== 'string' || value.trim() === '') {
+          return fallback;
+        }
+        return value;
+      }
+
+      function createProjectCard(project) {
+        const name = normalize(project.name, 'Untitled project');
+        const owner = normalize(project.owner, 'Unassigned');
+        const status = normalize(project.status, 'unknown');
+        const priority = normalize(project.priority, 'unknown');
+        const recentActivity = normalize(project.recentActivity, 'No recent activity recorded.');
+
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.dataset.status = status;
+        card.dataset.priority = priority;
+
+        card.innerHTML =
+          '<div class="project-card__header">' +
+          '<h2 class="project-card__name">' + escapeHtml(name) + '</h2>' +
+          '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + '</span>' +
+          '</div>' +
+          '<p class="project-card__owner">' + escapeHtml(owner) + '</p>' +
+          '<p class="project-card__activity">' + escapeHtml(recentActivity) + '</p>' +
+          '<div class="project-card__footer">' +
+          '<span class="priority-badge">' + escapeHtml(priority) + ' priority</span>' +
+          '</div>';
+
+        return card;
+      }
+
+      function renderProjects(projects) {
+        if (!Array.isArray(projects) || projects.length === 0) {
+          renderEmptyState();
+          return;
+        }
+
+        dashboard.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        projects.forEach(function (project) {
+          fragment.appendChild(createProjectCard(project));
+        });
+        dashboard.appendChild(fragment);
+      }
+
+      fetch('./project-data.json')
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Server responded with status ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data || !Array.isArray(data.projects)) {
+            throw new Error('project-data.json is missing a top-level "projects" array.');
+          }
+          renderProjects(data.projects);
+        })
+        .catch(function (error) {
+          renderError(error && error.message ? error.message : String(error));
+        });
+    })();
+  </script>
+</body>
+</html>

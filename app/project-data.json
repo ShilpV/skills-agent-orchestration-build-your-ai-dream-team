@@ -1,0 +1,68 @@
+{
+  "projects": [
+    {
+      "id": "proj-001",
+      "name": "Website Redesign",
+      "owner": "Jordan Lee",
+      "status": "active",
+      "priority": "high",
+      "recentActivity": "Homepage hero section approved; moving to responsive layout pass."
+    },
+    {
+      "id": "proj-002",
+      "name": "Mobile App Onboarding Revamp",
+      "owner": "Priya Nair",
+      "status": "blocked",
+      "priority": "high",
+      "recentActivity": "Waiting on design sign-off for the new sign-up flow before engineering can resume."
+    },
+    {
+      "id": "proj-003",
+      "name": "Q3 Marketing Analytics Dashboard",
+      "owner": "Sam Torres",
+      "status": "planned",
+      "priority": "medium",
+      "recentActivity": "Kickoff meeting scheduled for next sprint; requirements doc in review."
+    },
+    {
+      "id": "proj-004",
+      "name": "Internal Wiki Migration",
+      "owner": "Alex Kim",
+      "status": "done",
+      "priority": "low",
+      "recentActivity": "All legacy pages migrated and redirects verified."
+    },
+    {
+      "id": "proj-005",
+      "name": "Customer Feedback Portal Overhaul and Multi-Team Rollout Plan",
+      "owner": "Morgan Blake",
+      "status": "active",
+      "priority": "medium",
+      "recentActivity": "Completed the first round of usability testing with 12 participants across three customer segments, and the team is now synthesizing findings into a prioritized backlog for the next two sprints, including updates to the submission form, moderation workflow, and public status page."
+    },
+    {
+      "id": "proj-006",
+      "name": "Payment Gateway Upgrade",
+      "owner": "Jordan Lee",
+      "status": "blocked",
+      "priority": "medium",
+      "recentActivity": "Blocked on vendor API credentials; escalated to procurement."
+    },
+    {
+      "id": "proj-007",
+      "name": "Accessibility Audit",
+      "owner": "Priya Nair",
+      "status": "planned",
+      "priority": "low",
+      "recentActivity": "Audit checklist drafted; scheduling review with external consultant."
+    },
+    {
+      "id": "proj-008",
+      "name": "Data Warehouse Cost Optimization",
+      "owner": "Sam Torres",
+      "status": "active",
+      "priority": "high",
+      "recentActivity": "Identified redundant nightly jobs; projected 18% cost reduction after cleanup."
+    }
+  ]
+}
